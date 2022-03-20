@@ -5,6 +5,7 @@
 
 #I add
 *.vcxproj*
+*.sln
 # User-specific files
 *.rsuser
 *.suo
