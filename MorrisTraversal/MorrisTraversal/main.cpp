@@ -62,47 +62,244 @@ in-order:
         for those nodes can only appear once in the morris-order (indicates that 
         they have no left child)
 post-order:
-    it is a little tricky to get the post-order from a morris-order, however.
+    it is a little tricky to get the post-order from a morris-order, however. The
+    key point is to process the node only when we meet it twice. At the second time 
+    we meet a node, we process the right edge of its left subtree in reverse order.
+    for instance, for the tree above
+    its morris-order is: 1,2,4,2,5,8,5,1,3,6,3,7
+    the process is like this:
+        we scan the morris order, the first node we meet twice is 2, so at the second
+        time we, we process(e.g., print) its right edge of its left subtree:
+            
+            4
+        
+        then ,the second this kind of node is 5, let's do the same thing to it:
+            
+            8
+        
+        for the node 1' second time being scanned:
+            
+            5,2  (the reverse order of its right edge ot its left subtree)
+        
+        for the node 3' second time being scanned:
+            
+            6
+
+        OK, we have printed all the nodes in some subtree's left right edge. After 
+        doing this, the final step is to print the right edge of the tree as a whole,
+        in reverse roder as well:
+        
+            7,3,1
+        then ,the whole print is:
+        4,8,5,2,6,7,3,1
+        and it is the post-order of the tree.
 */
 
 //code
 //TreeNode definition
-template<typename T>
-struct TreeNode {
-    TreeNode *left, *right;
-    T val;
-    TreeNode(TreeNode* l, TreeNode* r, T v)
-        :left(l), right(r), val(v) {}
-    TreeNode(T v)
-        :left(nullptr), right(nullptr), val(v) {}
+class TreeNode {
+public:
+    std::shared_ptr<TreeNode> Left() { return _left; }
+    std::shared_ptr<TreeNode> Right()  { return _right; }
+    void setRight(std::shared_ptr<TreeNode> right)
+    {
+        _right = right;
+    }
+    void setLeft(std::shared_ptr<TreeNode> left)
+    {
+        _left = left;
+    }
+    int Value() const { return _val; }
+    TreeNode(std::shared_ptr<TreeNode> left, std::shared_ptr<TreeNode> right, int val)
+        :_left(left),_right(right),_val(val)
+    {}
+    TreeNode(int val)
+        :_left(nullptr), _right(nullptr), _val(val) {}
+private:
+    std::shared_ptr<TreeNode> _left;
+    std::shared_ptr<TreeNode> _right;
+    int _val;
 };
 
 
-template<typename T>
-void morris_traversal(TreeNode<T>* root)
+void MorrisTraversal(std::shared_ptr<TreeNode> root)
 {
-    TreeNode<T> *c_node = root;
-    while (c_node != nullptr)
+    std::shared_ptr<TreeNode> curNode = root;
+    while (curNode)
     {
-        if (c_node->left)
+        std::cout << curNode->Value();
+        if (curNode->Left())
         {
-            //right most
-            TreeNode<T>* rm = left;
-            while (rm->right && rm->right!=c_node)
-                rm = rm->right;
-            if (rm->right == c_node)
+            std::shared_ptr<TreeNode> left = curNode->Left();
+            while (left->Right() && left->Right() != curNode)
             {
-                c_node = c_node->right;
-                continue;
+                left = left->Right();
             }
-            else {
-                c_node = c_node->left;
+            if (left->Right() == curNode)
+            {
+                left->setRight(nullptr);
+                curNode = curNode->Right();
+            }
+            else
+            {
+                left->setRight(curNode);
+                curNode = curNode->Left();
+            }
+        }
+        else
+            curNode = curNode->Right();
+    }
+}
+
+
+void MorrisTraversalPreorder(std::shared_ptr<TreeNode> root)
+{
+    std::shared_ptr<TreeNode> curNode = root;
+    while (curNode)
+    {
+        if (curNode->Left())
+        {
+            std::shared_ptr<TreeNode> left = curNode->Left();
+            while (left->Right() && left->Right() != curNode)
+            {
+                left = left->Right();
+            }
+            if (left->Right() == curNode)
+            {
+                left->setRight(nullptr);
+                curNode = curNode->Right();
+            }
+            else
+            {
+                std::cout << curNode->Value();
+                left->setRight(curNode);
+                curNode = curNode->Left();
             }
         }
         else
         {
-            c = c_node->right;
+            std::cout << curNode->Value();
+            curNode = curNode->Right();
         }
     }
 }
+
+void MorrisTraversalInorder(std::shared_ptr<TreeNode> root)
+{
+    std::shared_ptr<TreeNode> curNode = root;
+    while (curNode)
+    {
+        if (curNode->Left())
+        {
+            std::shared_ptr<TreeNode> left = curNode->Left();
+            while (left->Right() && left->Right() != curNode)
+            {
+                left = left->Right();
+            }
+            if (left->Right() == curNode)
+            {
+                left->setRight(nullptr);
+                std::cout << curNode->Value();
+                curNode = curNode->Right();
+            }
+            else
+            {
+                left->setRight(curNode);
+                curNode = curNode->Left();
+            }
+        }
+        else
+        {
+            std::cout << curNode->Value();
+            curNode = curNode->Right();
+        }
+    }
+}
+
+
+void inverseScan(std::shared_ptr<TreeNode> node)
+{
+    std::shared_ptr<TreeNode> cur = node;
+    std::shared_ptr<TreeNode> next = node->Right();
+    while (next)
+    {
+        std::shared_ptr<TreeNode> tmp = next;
+        next = next->Right();
+        tmp->setRight(cur);
+        cur = tmp;
+    }
+    while (cur != node)
+    {
+        std::cout << cur->Value();
+        std::shared_ptr<TreeNode> pre = cur->Right();
+        cur->setRight(next);
+        next = cur;
+        cur = pre;
+    }
+    std::cout << cur->Value();
+}
+
+void MorrisTraversalPostorder(std::shared_ptr<TreeNode> root)
+{
+    std::shared_ptr<TreeNode> curNode = root;
+    while (curNode)
+    {
+        if (curNode->Left())
+        {
+            std::shared_ptr<TreeNode> left = curNode->Left();
+            while (left->Right() && left->Right() != curNode)
+            {
+                left = left->Right();
+            }
+            if (left->Right() == curNode)
+            {
+                left->setRight(nullptr);
+                inverseScan(curNode->Left());
+                curNode = curNode->Right();
+            }
+            else
+            {
+                left->setRight(curNode);
+                curNode = curNode->Left();
+            }
+        }
+        else
+            curNode = curNode->Right();
+    }
+    inverseScan(root);
+}
+
+
+
+/*
+     1
+    / \
+   /   \
+  2     3
+ / \   / \
+4   5 6   7
+   / 
+  8  
+
+*/
+int main()
+{
+    //build the tree shown above
+    std::shared_ptr<TreeNode> eight(new TreeNode(8));
+    std::shared_ptr<TreeNode> five(new TreeNode(eight, nullptr, 5));
+    std::shared_ptr<TreeNode> four(new TreeNode(4));
+    std::shared_ptr<TreeNode> two(new TreeNode(four, five, 2));
+    std::shared_ptr<TreeNode> six(new TreeNode(6));
+    std::shared_ptr<TreeNode> seven(new TreeNode(7));
+    std::shared_ptr<TreeNode> three(new TreeNode(six,seven,3));
+    std::shared_ptr<TreeNode> one(new TreeNode(two, three, 1));
+    //print the morris order
+    //MorrisTraversal(one);
+    //print the preorder
+    //MorrisTraversalPreorder(one);
+    //print middle order
+    //MorrisTraversalInorder(one);
+    //MorrisTraversalPostorder(one);
+}
+
 
